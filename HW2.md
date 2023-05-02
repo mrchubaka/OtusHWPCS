@@ -2,20 +2,20 @@
 
 ##Установка и настройка PostgteSQL в контейнере Docker
 
-#####Поставить Docker Engine
+Поставить Docker Engine
 
 ```
 sudo apt install apt-transport-https ca-certificates curl software-properties-common
 ```
 
-######Команда загружает GPG-ключ репозитория Docker, который будет использоваться для проверки подписей пакетов Docker при их установке из репозитория.
+#Команда загружает GPG-ключ репозитория Docker, который будет использоваться для проверки подписей пакетов Docker при их установке из репозитория.
 
 
 ```
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 ```
 
-######Добавления репозитория Docker в список источников пакетов
+#Добавления репозитория Docker в список источников пакетов
 
 ```
 echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
@@ -28,19 +28,19 @@ sudo usermod -aG docker $USER
 newgrp docker
 ```
 
-#####Cделать каталог /var/lib/postgres
+Cделать каталог /var/lib/postgres
 
 ```
 sudo mkdir /var/lib/postgres
 sudo chown -R alex:alex /var/lib/postgres
 ```
 
-#####Развернуть контейнер с PostgreSQL 14 смонтировав в него /var/lib/postgres
+Развернуть контейнер с PostgreSQL 14 смонтировав в него /var/lib/postgres
 
-######Поскольку на хосте у меня уже стоял экземпляр PG, то порт 5432 был занят, поэтому я сделал маппинг на 5433. 
+#Поскольку на хосте у меня уже стоял экземпляр PG, то порт 5432 был занят, поэтому я сделал маппинг на 5433. 
 
 
-######Посмотрел список не занятых на хосте портов с помощью команды ss -ltnp
+#Посмотрел список не занятых на хосте портов с помощью команды ss -ltnp
 
 ```
 alex@otus:/var/lib$ sudo ss -ltnp
@@ -64,16 +64,16 @@ docker run --name postgres14 -e POSTGRES_PASSWORD=P@ssw0rd -d -p 5433:5432 -v /v
 ```
 
 
-#####Развернуть контейнер с клиентом postgres
+Развернуть контейнер с клиентом postgres
 
 ```
 docker run -it --rm --name pg-client postgres:14 psql -h host.docker.internal -U postgres
 ```
 
-#####Подключится из контейнера с клиентом к контейнеру с сервером и сделать таблицу с парой строк
+Подключится из контейнера с клиентом к контейнеру с сервером и сделать таблицу с парой строк
 
 
-######Контейнер запустится в интерктивном режиме (it) и удалится после выхода (rm).
+#Контейнер запустится в интерктивном режиме (it) и удалится после выхода (rm).
 
 
 ```
@@ -99,31 +99,31 @@ postgres=#
 ```
 
 
-#####Подключится к контейнеру с сервером с ноутбука/компьютера извне
+Подключится к контейнеру с сервером с ноутбука/компьютера извне
 
 ![DBeaver](https://github.com/mrchubaka/OtusHWPCS/blob/main/HW2-12.jpeg)
 
 
-#####Удалить контейнер с сервером
+Удалить контейнер с сервером
 
 ```
 docker stop postgres14
 docker rm postgres14
 ```
 
-#####Создать его заново
+Создать его заново
 
 ```
 docker run --name postgres14 -e POSTGRES_PASSWORD=P@ssw0rd -d -p 5433:5432 -v /var/lib/postgres:/var/lib/postgresql/data postgres:14
 ```
 
-#####Подключится снова из контейнера с клиентом к контейнеру с сервером
+Подключится снова из контейнера с клиентом к контейнеру с сервером
 
 ```
 docker run -it --rm --name pg-client postgres:14 psql -h 172.17.0.2 -U postgres
 ```
 
-#####Проверить, что данные остались на месте
+Проверить, что данные остались на месте
 
 ```
 postgres=# select * from cars;
