@@ -101,9 +101,7 @@ postgres=#
 
 #####Подключится к контейнеру с сервером с ноутбука/компьютера извне
 
-![My photo](https://github.com/mrchubaka/OtusHWPCS/blob/main/HW2-12.jpeg)
-
-<image src="https://github.com/mrchubaka/OtusHWPCS/blob/main/HW2-12.jpeg" alt="Текст с описанием картинки">
+![DBeaver](https://github.com/mrchubaka/OtusHWPCS/blob/main/HW2-12.jpeg)
 
 
 #####Удалить контейнер с сервером
