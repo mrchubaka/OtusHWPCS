@@ -101,9 +101,9 @@ postgres=#
 
 #####Подключится к контейнеру с сервером с ноутбука/компьютера извне
 
-![My photo](/home/alex/Desktop/Lab-2/HW2-12.jpeg)
+![My photo](https://github.com/mrchubaka/OtusHWPCS/blob/main/HW2-12.jpeg)
 
-<image src="/home/alex/Desktop/Lab-2/HW2-12.jpeg" alt="Текст с описанием картинки">
+<image src="https://github.com/mrchubaka/OtusHWPCS/blob/main/HW2-12.jpeg" alt="Текст с описанием картинки">
 
 
 #####Удалить контейнер с сервером
