@@ -2,6 +2,240 @@
 
 ##Настройка дисков для Постгреса
 
+#####Когда я все уже сделал, я обнаружил, что нужно было работать с PG15, а я на автомате все сдалал на PG14.
+#####Я понимаю принципиальный момент в данном случае и вот каким образом, можно поставить PG15.
+
+1. Загружаем ключ и сохраните в файл.
+
+```
+alex@otus:~/Desktop$ wget --quiet -O ~/ACCC4CF8.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+```
+
+2. Испортируем его в /etc/apt/trusted.gpg.d:
+
+```
+alex@otus:~/Desktop$ sudo gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/postgresql.gpg --import ~/ACCC4CF8.asc
+gpg: key 7FCC7D46ACCC4CF8: 2 signatures not checked due to missing keys
+gpg: directory '/root/.gnupg' created
+gpg: /root/.gnupg/trustdb.gpg: trustdb created
+gpg: key 7FCC7D46ACCC4CF8: public key "PostgreSQL Debian Repository" imported
+gpg: Total number processed: 1
+gpg:               imported: 1
+gpg: no ultimately trusted keys found
+
+```
+
+3. Назначаем права владения этому файлу пользователю _apt:
+
+```
+alex@otus:~/Desktop$ sudo chown _apt:root /etc/apt/trusted.gpg.d/postgresql.gpg
+```
+
+4. Добавляем репозиторий PostgreSQL в ваш список репозиториев:
+
+```
+alex@otus:~/Desktop$ sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+```
+
+5. Обновляем список доступных пакетов:
+
+```
+alex@otus:~/Desktop$ sudo apt update
+Hit:1 http://ru.archive.ubuntu.com/ubuntu jammy InRelease
+Get:2 http://ru.archive.ubuntu.com/ubuntu jammy-updates InRelease [119 kB]              
+Get:3 http://ru.archive.ubuntu.com/ubuntu jammy-backports InRelease [108 kB]                                                            
+Get:4 http://ru.archive.ubuntu.com/ubuntu jammy-updates/main amd64 Packages [577 kB]                                                    
+Get:5 http://ru.archive.ubuntu.com/ubuntu jammy-updates/main i386 Packages [390 kB]        
+Get:6 http://apt.postgresql.org/pub/repos/apt jammy-pgdg InRelease [116 kB]                          
+Get:7 http://ru.archive.ubuntu.com/ubuntu jammy-updates/main Translation-en [166 kB]
+Get:8 http://ru.archive.ubuntu.com/ubuntu jammy-updates/main amd64 DEP-11 Metadata [101 kB]                      
+Get:9 http://ru.archive.ubuntu.com/ubuntu jammy-updates/main amd64 c-n-f Metadata [14,4 kB]
+Get:10 http://ru.archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 Packages [226 kB]
+Get:11 http://ru.archive.ubuntu.com/ubuntu jammy-updates/restricted Translation-en [33,7 kB]
+Get:12 http://ru.archive.ubuntu.com/ubuntu jammy-updates/universe amd64 Packages [887 kB]
+Get:13 http://ru.archive.ubuntu.com/ubuntu jammy-updates/universe i386 Packages [609 kB]
+Get:14 http://ru.archive.ubuntu.com/ubuntu jammy-updates/universe Translation-en [182 kB]
+Get:15 http://ru.archive.ubuntu.com/ubuntu jammy-updates/universe amd64 DEP-11 Metadata [268 kB]
+Get:16 http://ru.archive.ubuntu.com/ubuntu jammy-updates/universe amd64 c-n-f Metadata [18,8 kB]
+Get:17 http://ru.archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 Packages [34,9 kB]  
+Get:18 http://ru.archive.ubuntu.com/ubuntu jammy-updates/multiverse Translation-en [8 080 B]
+Get:19 http://ru.archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 DEP-11 Metadata [940 B]
+Get:20 http://ru.archive.ubuntu.com/ubuntu jammy-backports/main amd64 DEP-11 Metadata [8 000 B]
+Get:21 http://ru.archive.ubuntu.com/ubuntu jammy-backports/universe amd64 DEP-11 Metadata [12,9 kB]
+Get:22 http://apt.postgresql.org/pub/repos/apt jammy-pgdg/main amd64 Packages [262 kB]         
+Get:23 http://security.ubuntu.com/ubuntu jammy-security InRelease [110 kB]        
+Get:24 http://security.ubuntu.com/ubuntu jammy-security/main i386 Packages [209 kB]
+Get:25 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [362 kB]
+Get:26 http://security.ubuntu.com/ubuntu jammy-security/main Translation-en [107 kB]
+Get:27 http://security.ubuntu.com/ubuntu jammy-security/main amd64 DEP-11 Metadata [41,7 kB]
+Get:28 http://security.ubuntu.com/ubuntu jammy-security/main amd64 c-n-f Metadata [9 716 B]
+Get:29 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 Packages [225 kB]
+Get:30 http://security.ubuntu.com/ubuntu jammy-security/restricted Translation-en [33,3 kB]
+Get:31 http://security.ubuntu.com/ubuntu jammy-security/universe i386 Packages [526 kB]
+Get:32 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [709 kB]
+Get:33 http://security.ubuntu.com/ubuntu jammy-security/universe Translation-en [122 kB]
+Get:34 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 DEP-11 Metadata [18,5 kB]
+Get:35 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 c-n-f Metadata [14,3 kB]
+Get:36 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 Packages [30,2 kB]
+Get:37 http://security.ubuntu.com/ubuntu jammy-security/multiverse Translation-en [5 828 B]
+Fetched 6 668 kB in 3s (2 009 kB/s)      
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+290 packages can be upgraded. Run 'apt list --upgradable' to see them.
+N: Skipping acquire of configured file 'main/binary-i386/Packages' as repository 'http://apt.postgresql.org/pub/repos/apt jammy-pgdg InRelease' doesn't support architecture 'i386'
+
+```
+
+6. Устанавливаем PostgreSQL 15:
+
+```
+alex@otus:~/Desktop$ sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+alex@otus:~/Desktop$ sudo apt install postgresql-15
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following package was automatically installed and is no longer required:
+  systemd-hwe-hwdb
+Use 'sudo apt autoremove' to remove it.
+The following additional packages will be installed:
+  libcommon-sense-perl libjson-perl libjson-xs-perl libllvm14 libpq5 libtypes-serialiser-perl postgresql-client-15 postgresql-client-common postgresql-common sysstat
+Suggested packages:
+  postgresql-doc-15 isag
+The following NEW packages will be installed:
+  libcommon-sense-perl libjson-perl libjson-xs-perl libllvm14 libpq5 libtypes-serialiser-perl postgresql-15 postgresql-client-15 postgresql-client-common postgresql-common sysstat
+0 upgraded, 11 newly installed, 0 to remove and 290 not upgraded.
+Need to get 43,8 MB of archives.
+After this operation, 174 MB of additional disk space will be used.
+Do you want to continue? [Y/n] y
+Get:1 http://ru.archive.ubuntu.com/ubuntu jammy/main amd64 libjson-perl all 4.04000-1 [81,8 kB]
+Get:2 http://ru.archive.ubuntu.com/ubuntu jammy/main amd64 libcommon-sense-perl amd64 3.75-2build1 [21,1 kB]
+Get:3 http://ru.archive.ubuntu.com/ubuntu jammy/main amd64 libtypes-serialiser-perl all 1.01-1 [11,6 kB]
+Get:4 http://ru.archive.ubuntu.com/ubuntu jammy/main amd64 libjson-xs-perl amd64 4.030-1build3 [87,2 kB]
+Get:5 http://ru.archive.ubuntu.com/ubuntu jammy/main amd64 libllvm14 amd64 1:14.0.0-1ubuntu1 [24,0 MB]
+Get:6 http://apt.postgresql.org/pub/repos/apt jammy-pgdg/main amd64 postgresql-client-common all 248.pgdg22.04+1 [92,7 kB]
+Get:7 http://apt.postgresql.org/pub/repos/apt jammy-pgdg/main amd64 postgresql-common all 248.pgdg22.04+1 [237 kB]
+Get:8 http://apt.postgresql.org/pub/repos/apt jammy-pgdg/main amd64 libpq5 amd64 15.2-1.pgdg22.04+1 [183 kB]
+Get:9 http://apt.postgresql.org/pub/repos/apt jammy-pgdg/main amd64 postgresql-client-15 amd64 15.2-1.pgdg22.04+1 [1 680 kB]
+Get:10 http://apt.postgresql.org/pub/repos/apt jammy-pgdg/main amd64 postgresql-15 amd64 15.2-1.pgdg22.04+1 [16,9 MB]
+Get:11 http://ru.archive.ubuntu.com/ubuntu jammy-updates/main amd64 sysstat amd64 12.5.2-2ubuntu0.1 [487 kB]
+Fetched 43,8 MB in 4s (12,3 MB/s)                                       
+Preconfiguring packages ...
+Selecting previously unselected package libjson-perl.
+(Reading database ... 174832 files and directories currently installed.)
+Preparing to unpack .../00-libjson-perl_4.04000-1_all.deb ...
+Unpacking libjson-perl (4.04000-1) ...
+Selecting previously unselected package postgresql-client-common.
+Preparing to unpack .../01-postgresql-client-common_248.pgdg22.04+1_all.deb ...
+Unpacking postgresql-client-common (248.pgdg22.04+1) ...
+Selecting previously unselected package postgresql-common.
+Preparing to unpack .../02-postgresql-common_248.pgdg22.04+1_all.deb ...
+Adding 'diversion of /usr/bin/pg_config to /usr/bin/pg_config.libpq-dev by postgresql-common'
+Unpacking postgresql-common (248.pgdg22.04+1) ...
+Selecting previously unselected package libcommon-sense-perl:amd64.
+Preparing to unpack .../03-libcommon-sense-perl_3.75-2build1_amd64.deb ...
+Unpacking libcommon-sense-perl:amd64 (3.75-2build1) ...
+Selecting previously unselected package libtypes-serialiser-perl.
+Preparing to unpack .../04-libtypes-serialiser-perl_1.01-1_all.deb ...
+Unpacking libtypes-serialiser-perl (1.01-1) ...
+Selecting previously unselected package libjson-xs-perl.
+Preparing to unpack .../05-libjson-xs-perl_4.030-1build3_amd64.deb ...
+Unpacking libjson-xs-perl (4.030-1build3) ...
+Selecting previously unselected package libllvm14:amd64.
+Preparing to unpack .../06-libllvm14_1%3a14.0.0-1ubuntu1_amd64.deb ...
+Unpacking libllvm14:amd64 (1:14.0.0-1ubuntu1) ...
+Selecting previously unselected package libpq5:amd64.
+Preparing to unpack .../07-libpq5_15.2-1.pgdg22.04+1_amd64.deb ...
+Unpacking libpq5:amd64 (15.2-1.pgdg22.04+1) ...
+Selecting previously unselected package postgresql-client-15.
+Preparing to unpack .../08-postgresql-client-15_15.2-1.pgdg22.04+1_amd64.deb ...
+Unpacking postgresql-client-15 (15.2-1.pgdg22.04+1) ...
+Selecting previously unselected package postgresql-15.
+Preparing to unpack .../09-postgresql-15_15.2-1.pgdg22.04+1_amd64.deb ...
+Unpacking postgresql-15 (15.2-1.pgdg22.04+1) ...
+Selecting previously unselected package sysstat.
+Preparing to unpack .../10-sysstat_12.5.2-2ubuntu0.1_amd64.deb ...
+Unpacking sysstat (12.5.2-2ubuntu0.1) ...
+Setting up postgresql-client-common (248.pgdg22.04+1) ...
+Setting up libpq5:amd64 (15.2-1.pgdg22.04+1) ...
+Setting up libcommon-sense-perl:amd64 (3.75-2build1) ...
+Setting up postgresql-client-15 (15.2-1.pgdg22.04+1) ...
+update-alternatives: using /usr/share/postgresql/15/man/man1/psql.1.gz to provide /usr/share/man/man1/psql.1.gz (psql.1.gz) in auto mode
+Setting up libllvm14:amd64 (1:14.0.0-1ubuntu1) ...
+Setting up libtypes-serialiser-perl (1.01-1) ...
+Setting up libjson-perl (4.04000-1) ...
+Setting up sysstat (12.5.2-2ubuntu0.1) ...
+
+Creating config file /etc/default/sysstat with new version
+update-alternatives: using /usr/bin/sar.sysstat to provide /usr/bin/sar (sar) in auto mode
+Created symlink /etc/systemd/system/sysstat.service.wants/sysstat-collect.timer → /lib/systemd/system/sysstat-collect.timer.
+Created symlink /etc/systemd/system/sysstat.service.wants/sysstat-summary.timer → /lib/systemd/system/sysstat-summary.timer.
+Created symlink /etc/systemd/system/multi-user.target.wants/sysstat.service → /lib/systemd/system/sysstat.service.
+Setting up libjson-xs-perl (4.030-1build3) ...
+Setting up postgresql-common (248.pgdg22.04+1) ...
+Adding user postgres to group ssl-cert
+
+Creating config file /etc/postgresql-common/createcluster.conf with new version
+Building PostgreSQL dictionaries from installed myspell/hunspell packages...
+  en_us
+Removing obsolete dictionary files:
+'/etc/apt/trusted.gpg.d/apt.postgresql.org.gpg' -> '/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg'
+Created symlink /etc/systemd/system/multi-user.target.wants/postgresql.service → /lib/systemd/system/postgresql.service.
+Setting up postgresql-15 (15.2-1.pgdg22.04+1) ...
+Creating new PostgreSQL cluster 15/main ...
+/usr/lib/postgresql/15/bin/initdb -D /var/lib/postgresql/15/main --auth-local peer --auth-host scram-sha-256 --no-instructions
+The files belonging to this database system will be owned by user "postgres".
+This user must also own the server process.
+
+The database cluster will be initialized with this locale configuration:
+  provider:    libc
+  LC_COLLATE:  en_US.UTF-8
+  LC_CTYPE:    en_US.UTF-8
+  LC_MESSAGES: en_US.UTF-8
+  LC_MONETARY: ru_RU.UTF-8
+  LC_NUMERIC:  ru_RU.UTF-8
+  LC_TIME:     ru_RU.UTF-8
+The default database encoding has accordingly been set to "UTF8".
+The default text search configuration will be set to "english".
+
+Data page checksums are disabled.
+
+fixing permissions on existing directory /var/lib/postgresql/15/main ... ok
+creating subdirectories ... ok
+selecting dynamic shared memory implementation ... posix
+selecting default max_connections ... 100
+selecting default shared_buffers ... 128MB
+selecting default time zone ... Europe/Moscow
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+update-alternatives: using /usr/share/postgresql/15/man/man1/postmaster.1.gz to provide /usr/share/man/man1/postmaster.1.gz (postmaster.1.gz) in auto mode
+Processing triggers for man-db (2.10.2-1) ...
+Processing triggers for libc-bin (2.35-0ubuntu3.1) ...
+alex@otus:~/Desktop$ 
+```
+
+7. Проверяем.
+
+```
+alex@otus:~/Desktop$ 
+alex@otus:~/Desktop$ sudo -u postgres psql -c "SELECT version();"
+could not change directory to "/home/alex/Desktop": Permission denied
+                                                              version                                                              
+-----------------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 15.2 (Ubuntu 15.2-1.pgdg22.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 11.3.0-1ubuntu1~22.04) 11.3.0, 64-bit
+(1 row)
+
+alex@otus:~/Desktop$ 
+
+```
+
+========================================================================================================================================================================
+========================================================================================================================================================================
+
+#####Далее я все делал на базе 14 версии.
+
 #####Проверьте что кластер запущен через sudo -u postgres pg_lsclusters
 
 ```
