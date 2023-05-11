@@ -249,7 +249,8 @@ alex@otus:~$
 
 
 
-#####Перенесите содержимое /var/lib/postgres/14 в /mnt/data - mv /var/lib/postgresql/14 /mnt/data
+#####Перенесите содержимое /var/lib/postgres/14 в /mnt/data - 
+/var/lib/postgresql/14 /mnt/data
 
 
 ```
@@ -308,6 +309,7 @@ postgres=#
 
 ![Disk moving](https://github.com/mrchubaka/OtusHWPCS/blob/main/hw3.png)
 
+######Затем я примонтировал новый диск в к новой VM и изменил пути к данным, как это было сделано в предыдущем задании.
 ```
 alex@otus-2:~/Desktop$ sudo systemctl stop postgresql@14-main
 alex@otus-2:~/Desktop$ 
@@ -326,7 +328,11 @@ alex@otus-2:~/Desktop$ sudo systemctl status postgresql@14-main
 мая 10 17:53:08 otus-2 systemd[1]: postgresql@14-main.service: Control process exited, code=exited, status=2/INVALIDARGUMENT
 мая 10 17:53:08 otus-2 systemd[1]: postgresql@14-main.service: Failed with result 'exit-code'.
 alex@otus-2:~/Desktop$
+```
 
+######Вот только тут я не удалил данные, а просто переименовал папку, что по смыслу в данном контексте тоже самое.
+
+```
 alex@otus-2:/var/lib/postgresql$ sudo mv 14/ 14_bk
 
 alex@otus-2:~/Desktop$ lsblk 
