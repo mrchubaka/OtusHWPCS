@@ -164,7 +164,7 @@ type |   user   | database | state  |   addr    | port | local_addr | local_port
 (20 rows)
 ```
 
-####Установил HAProxy на 1-й ноде:
+####Установил HAProxy на 2х нодах haX:
 
 ```
 alex@ha1:~/Desktop$ sudo systemctl status haproxy.service
@@ -218,8 +218,6 @@ alex@ha2:~/Desktop$ sudo systemctl status haproxy.service
 июн 04 13:43:36 ha2 haproxy[1115]: Server postgres_write/pg2 is DOWN, reason: Layer7 wrong status, code: 503, info: "Service Unavailable", check duration: 9ms. 1 >
 июн 04 13:43:36 ha2 haproxy[1115]: Server postgres_write/pg2 is DOWN, reason: Layer7 wrong status, code: 503, info: "Service Unavailable", check duration: 9ms. 1 >
 alex@ha2:~/Desktop$ 
-
-
 
 ```
 
