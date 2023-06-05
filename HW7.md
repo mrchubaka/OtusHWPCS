@@ -198,9 +198,7 @@ alex@etcd1:/etc$
 alex@etcd1:/etc$ kubectl port-forward deployment/postgres 5432:5432
 Forwarding from 127.0.0.1:5432 -> 5432
 Forwarding from [::1]:5432 -> 5432
-
 ```
-
 ####Установка клиента
 ```
 alex@alex-otus2:~/Desktop$ sudo apt update && sudo apt upgrade -y && sudo apt install -y postgresql-client-common && sudo apt install postgresql-client -y
@@ -217,7 +215,29 @@ postgres=#
 
 ```
 
+###UPD
+####Проборос сервиса, а не deployment:
+```
+alex@alex-otus2:~/Desktop$ kubectl port-forward svc/postgres-service 5432:5432
+Forwarding from 127.0.0.1:5432 -> 5432
+Forwarding from [::1]:5432 -> 5432
+```
 
+####Подключение
+```
+alex@alex-otus2:~/Desktop$ psql -h localhost -U postgres -d postgres
+psql (14.8 (Ubuntu 14.8-0ubuntu0.22.04.1))
+Type "help" for help.
 
+postgres=# 
+```
+
+####Логирование
+```
+alex@alex-otus2:~/Desktop$ kubectl port-forward svc/postgres-service 5432:5432
+Forwarding from 127.0.0.1:5432 -> 5432
+Forwarding from [::1]:5432 -> 5432
+Handling connection for 5432
+```
 
 
