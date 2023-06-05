@@ -215,8 +215,7 @@ postgres=#
 
 ```
 
-###UPD
-####Проборос сервиса, а не deployment:
+###UPD: Проборос сервиса, а не deployment:
 ```
 alex@alex-otus2:~/Desktop$ kubectl port-forward svc/postgres-service 5432:5432
 Forwarding from 127.0.0.1:5432 -> 5432
