@@ -1,242 +1,179 @@
 #Домашнее задание №7
 
-##Развернуть Постгрес в миникубе
-
-####Устанавливаем minikube и разворачиваем PostgreSQL 14 через манифест
+##Разворачиваем и настраиваем БД с большими данными
 
 
-####Установка minikube
+###Создаем внешнюю таблицу для taxi.csv
 ```
-alex@alex-otus2:~/Desktop$ wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
---2023-06-04 14:50:45--  https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-Resolving storage.googleapis.com (storage.googleapis.com)... 173.194.221.128, 209.85.233.128, 142.250.150.128, ...
-Connecting to storage.googleapis.com (storage.googleapis.com)|173.194.221.128|:443... connected.
-HTTP request sent, awaiting response... 200 OK
-Length: 83937631 (80M) [application/octet-stream]
-Saving to: ‘minikube-linux-amd64’
+vehicles=# SET log_duration = on;
+SET
+vehicles=# 
 
-minikube-linux-amd64                      100%[===================================================================================>]  80,05M  8,82MB/s    in 9,4s    
+vehicles=# create foreign table taxi_trips_fdw_2 (
+unique_key text, 
+taxi_id text, 
+trip_start_timestamp TIMESTAMP, 
+trip_end_timestamp TIMESTAMP, 
+trip_seconds bigint, 
+trip_miles numeric, 
+pickup_census_tract bigint, 
+dropoff_census_tract bigint, 
+pickup_community_area bigint, 
+dropoff_community_area bigint, 
+fare numeric, 
+tips numeric, 
+tolls numeric, 
+extras numeric, 
+trip_total numeric, 
+payment_type text, 
+company text, 
+pickup_latitude numeric, 
+pickup_longitude numeric, 
+pickup_location text, 
+dropoff_latitude numeric, 
+dropoff_longitude numeric, 
+dropoff_location text
+)
+server pgcsv
+options(filename '/etc/taxi_big.csv', format 'csv', header 'true', delimiter ',');
+CREATE FOREIGN TABLE
+vehicles=# 
+vehicles=# select count(*) from taxi_trips_fdw_2;
+  count   
+----------
+ 26753683
+(1 row)
 
-2023-06-04 14:50:55 (8,56 MB/s) - ‘minikube-linux-amd64’ saved [83937631/83937631]
-
-alex@alex-otus2:~/Desktop$ chmod +x minikube-linux-amd64
-alex@alex-otus2:~/Desktop$ sudo mv minikube-linux-amd64 /usr/local/bin/minikube
-alex@alex-otus2:~/Desktop$ minikube version
-minikube version: v1.30.1
-commit: 08896fd1dc362c097c925146c4a0d0dac715ace0
-
-```
-
-
-####Создаем манифест файл
-
-
-```
-alex@alex-otus2:~/Desktop$ cd /etc/
-alex@alex-otus2:/etc$ sudo nano postgresql.yaml
-alex@alex-otus2:/etc$
-alex@alex-otus2:/etc$ cat postgresql.yaml 
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: postgres
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgres
-  template:
-    metadata:
-      labels:
-        app: postgres
-    spec:
-      containers:
-        - name: postgres
-          image: postgres:14
-          imagePullPolicy: "IfNotPresent"
-          ports:
-            - containerPort: 5432
-          env:
-            - name: POSTGRES_USER
-              value: "postgres"
-            - name: POSTGRES_PASSWORD
-              value: "password"
-          volumeMounts:
-            - name: postgres-storage
-              mountPath: /var/lib/postgresql/data
-      volumes:
-        - name: postgres-storage
-          emptyDir: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres-service
-spec:
-  selector:
-    app: postgres
-  ports:
-    - protocol: TCP
-      port: 5432
-      targetPort: 5432
-alex@alex-otus2:/etc$ 
+vehicles=# 
 
 
 ```
 
-####Запуск Minikube
+###Duration postgresql 14
 
 ```
-alex@etcd1:~/Desktop$ minikube start
-😄  minikube v1.30.1 on Ubuntu 22.04
-👎  Unable to pick a default driver. Here is what was considered, in preference order:
-💡  Alternatively you could install one of these drivers:
-    ▪ docker: Not installed: exec: "docker": executable file not found in $PATH
-    ▪ kvm2: Not installed: exec: "virsh": executable file not found in $PATH
-    ▪ podman: Not installed: exec: "podman": executable file not found in $PATH
-    ▪ qemu2: Not installed: exec: "qemu-system-x86_64": executable file not found in $PATH
-    ▪ virtualbox: Not installed: unable to find VBoxManage in $PATH
+Запрос Count 100655.154 ms
 
-❌  Exiting due to DRV_NOT_DETECTED: No possible driver was detected. Try specifying --driver, or see https://minikube.sigs.k8s.io/docs/start/
-
-alex@etcd1:~/Desktop$ 
+2023-06-08 13:02:51.708 MSK [2448] postgres@vehicles LOG:  duration: 100655.154 ms
 
 ```
 
-####Minikube требует драйвера виртуализации для работы.
-
+###Загрузка того же сета в postgres (Greenplum Database) 6.19.0 мз 8 сегментов на 4-х серверах
 ```
-alex@etcd1:~/Desktop$ sudo apt-get install \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg \
-    lsb-release
-```
+20230607:16:38:39:002068 gpstart:gp61m1:gpadmin-[INFO]:-----------------------------------------------------
+20230607:16:38:39:002068 gpstart:gp61m1:gpadmin-[INFO]:-   Successful segment starts                                            = 8
+20230607:16:38:39:002068 gpstart:gp61m1:gpadmin-[INFO]:-   Failed segment starts                                                = 0
+20230607:16:38:39:002068 gpstart:gp61m1:gpadmin-[INFO]:-   Skipped segment starts (segments are marked down in configuration)   = 0
+20230607:16:38:39:002068 gpstart:gp61m1:gpadmin-[INFO]:-----------------------------------------------------
+20230607:16:38:39:002068 gpstart:gp61m1:gpadmin-[INFO]:-Successfully started 8 of 8 segment instances
+20230607:16:38:39:002068 gpstart:gp61m1:gpadmin-[INFO]:-----------------------------------------------------
 
-####Официальный ключ репозитория Docker GPG:
-```
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-```
+Через file_fdw в GP не получилось, поскольку в GP штатно есть только postgres_fdw в итоге использовал COPY.
 
-####Добавим репозиторий Docker:
-```
-echo \
-  "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-```
-
-####Обновляем список пакетов в вашем репозитории снова и установим Docker:
-```
-sudo apt-get update
-sudo apt-get install docker-ce docker-ce-cli containerd.io
-```
-
-####Решаю ошибку прав
-
-```
-alex@etcd1:~/Desktop$ minikube start --driver=docker
-😄  minikube v1.30.1 on Ubuntu 22.04
-✨  Using the docker driver based on user configuration
-
-💣  Exiting due to PROVIDER_DOCKER_NEWGRP: "docker version --format -:" exit status 1: permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.24/version": dial unix /var/run/docker.sock: connect: permission denied
-💡  Suggestion: Add your user to the 'docker' group: 'sudo usermod -aG docker $USER && newgrp docker'
-📘  Documentation: https://docs.docker.com/engine/install/linux-postinstall/
-
-alex@etcd1:~/Desktop$ 
-
-alex@etcd1:~/Desktop$ sudo usermod -aG docker $USER
-alex@etcd1:~/Desktop$ newgrp docker
-alex@etcd1:~/Desktop$ 
 
 ```
 
-####Запуск Minikube
+###Duration Greenplum
 ```
-alex@etcd1:~/Desktop$ minikube start --driver=docker
-😄  minikube v1.30.1 on Ubuntu 22.04
-✨  Using the docker driver based on user configuration
-📌  Using Docker driver with root privileges
-👍  Starting control plane node minikube in cluster minikube
-🚜  Pulling base image ...
-💾  Downloading Kubernetes v1.26.3 preload ...
-    > preloaded-images-k8s-v18-v1...:  397.02 MiB / 397.02 MiB  100.00% 8.51 Mi
-    > gcr.io/k8s-minikube/kicbase...:  373.53 MiB / 373.53 MiB  100.00% 4.41 Mi
-🔥  Creating docker container (CPUs=2, Memory=2200MB) ...
-🐳  Preparing Kubernetes v1.26.3 on Docker 23.0.2 ...
-    ▪ Generating certificates and keys ...
-    ▪ Booting up control plane ...
-    ▪ Configuring RBAC rules ...
-🔗  Configuring bridge CNI (Container Networking Interface) ...
-    ▪ Using image gcr.io/k8s-minikube/storage-provisioner:v5
-🔎  Verifying Kubernetes components...
-🌟  Enabled addons: storage-provisioner, default-storageclass
-🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
-alex@etcd1:~/Desktop$ 
+Запрос Count 7701.618 ms
+
+2023-06-08 15:09:06.515789 MSK,"gpadmin","alex",p6005,th615483520,"[local]",,2023-06-08 14:58:54 MSK,0,con15,cmd23,seg-1,,,,,"LOG","00000","duration: 7701.618 ms",,,,,,"select count(*) FROM taxi_trips_fdw_2 ;",0,,"postgres.c",1915,
 
 ```
 
-####Инициализация контейнера
+
+###Использование postgres_fdw в Greenplum
+
 ```
-alex@etcd1:~/Desktop$ kubectl get pods
-No resources found in default namespace.
-alex@etcd1:~/Desktop$ 
+CREATE SERVER foreign_postgres_server
+    FOREIGN DATA WRAPPER postgres_fdw
+    OPTIONS (
+        host '192.168.200.80', 
+        port '5432', 
+        dbname 'vehicles'
+    );
+	
+	
+CREATE USER MAPPING FOR CURRENT_USER
+    SERVER foreign_postgres_server
+    OPTIONS (
+        user 'postgres', 
+        password 'alex'
+    );
 
-alex@etcd1:/etc$ kubectl apply -f postgresql.yaml
-deployment.apps/postgres created
-service/postgres-service created
+alex=# CREATE FOREIGN TABLE taxi_trips_fdw_3 (
+    unique_key text,
+    taxi_id text,
+    trip_start_timestamp TIMESTAMP,
+    trip_end_timestamp TIMESTAMP,
+    trip_seconds bigint,
+    trip_miles numeric,
+    pickup_census_tract bigint,
+    dropoff_census_tract bigint,
+    pickup_community_area bigint,
+    dropoff_community_area bigint,
+    fare numeric,
+    tips numeric,
+    tolls numeric,
+    extras numeric,
+    trip_total numeric,
+    payment_type text,
+    company text,
+    pickup_latitude numeric,
+    pickup_longitude numeric,
+    pickup_location text,
+    dropoff_latitude numeric,
+    dropoff_longitude numeric,
+    dropoff_location text
+)
+SERVER foreign_postgres_server
+OPTIONS (
+    table_name 'taxi_trips_fdw_2'
+);
 
-alex@etcd1:/etc$ kubectl get pods
-NAME                        READY   STATUS              RESTARTS   AGE
-postgres-5b555f9dcc-hlv7r   0/1     ContainerCreating   0          5s
+alex=# select count(*) from taxi_trips_fdw_3;
+  count
+----------
+ 26753683
+(1 row)
+
+alex=#
+```
+
+###Duration Greenplum через postgres_fdw 
+```
+
+157073.856 ms
+
+2023-06-08 16:44:42.594152 MSK,"gpadmin","alex",p9050,th615483520,"[local]",,2023-06-08 16:41:55 MSK,0,con24,cmd3,seg-1,,,,,"LOG","00000","duration: 157073.856 ms",,,,,,"select count(*) from taxi_trips_fdw_3;",0,,"postgres.c",1915,
+
+
+```
+
+###Использование pgload в postgres и Duration postgres через pgload 
+
+```
+
+alex@etcd1:/etc$ time pgloader pgload.load 
+2023-06-08T14:19:41.012000Z LOG pgloader version "3.6.3~devel"
+2023-06-08T14:19:41.016000Z LOG Data errors in '/tmp/pgloader/'
+2023-06-08T14:19:41.016000Z LOG Parsing commands from file #P"/etc/pgload.load"
+2023-06-08T15:02:15.835095Z LOG report summary reset
+                 table name     errors       rows      bytes      total time
+---------------------------  ---------  ---------  ---------  --------------
+                      fetch          0          0                     0.004s
+---------------------------  ---------  ---------  ---------  --------------
+"public"."taxi_trips_fdw_4"          0   26753684     1.0 GB      42m34.615s
+---------------------------  ---------  ---------  ---------  --------------
+            Files Processed          0          1                     0.016s
+    COPY Threads Completion          0          2                 42m34.615s
+---------------------------  ---------  ---------  ---------  --------------
+          Total import time          ✓   26753684     1.0 GB      42m34.631s
+
+real	42m35,322s
+user	10m29,076s
+sys	35m47,367s
 alex@etcd1:/etc$ 
 
-```
-
-####Проброс портов из контейнера PostgreSQL, позволяя нам подключиться к базе данных.
-```
-alex@etcd1:/etc$ kubectl port-forward deployment/postgres 5432:5432
-Forwarding from 127.0.0.1:5432 -> 5432
-Forwarding from [::1]:5432 -> 5432
-```
-####Установка клиента
-```
-alex@alex-otus2:~/Desktop$ sudo apt update && sudo apt upgrade -y && sudo apt install -y postgresql-client-common && sudo apt install postgresql-client -y
 
 ```
-
-####Подключение к базе
-```
-alex@alex-otus2:~/Desktop$ psql -h localhost -U postgres -d postgres
-psql (14.8 (Ubuntu 14.8-0ubuntu0.22.04.1))
-Type "help" for help.
-
-postgres=# 
-
-```
-
-###UPD: Проборос сервиса, а не deployment:
-```
-alex@alex-otus2:~/Desktop$ kubectl port-forward svc/postgres-service 5432:5432
-Forwarding from 127.0.0.1:5432 -> 5432
-Forwarding from [::1]:5432 -> 5432
-```
-
-####Подключение
-```
-alex@alex-otus2:~/Desktop$ psql -h localhost -U postgres -d postgres
-psql (14.8 (Ubuntu 14.8-0ubuntu0.22.04.1))
-Type "help" for help.
-
-postgres=# 
-```
-
-####Логирование
-```
-alex@alex-otus2:~/Desktop$ kubectl port-forward svc/postgres-service 5432:5432
-Forwarding from 127.0.0.1:5432 -> 5432
-Forwarding from [::1]:5432 -> 5432
-Handling connection for 5432
-```
-
-
