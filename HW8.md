@@ -1,4 +1,4 @@
-#Домашнее задание №7
+#Домашнее задание №8
 
 ##Вариант 2 
 ###Introducing pg_auto_failover: Open source extension for automated
