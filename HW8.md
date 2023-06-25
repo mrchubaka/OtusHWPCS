@@ -19,12 +19,12 @@ postgres@pgm:~$ vi .profile
 export PGDATA="/var/lib/postgresql/14/autofail"
 ```
 
-###Прописать расширение pgautofailover 
+###Прописать расширение pgautofailover в postgresql.conf иначе не работает. 
 ```
 В postgresql.conf прописать значение shared_preload_libraries = 'pgautofailover'.
 ```
 
-###Созджать монитор:
+###Создать монитор:
 ```
 postgres@pgm:~$ pg_autoctl create monitor --auth trust --ssl-mode require --ssl-self-signed --pgport 6000 --hostname pgm
 13:26:22 5874 INFO  Using --ssl-self-signed: pg_autoctl will create self-signed certificates, allowing for encrypted network traffic
