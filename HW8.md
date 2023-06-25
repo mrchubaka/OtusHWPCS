@@ -1,9 +1,9 @@
 #Домашнее задание №8
 
 ##Вариант 2 
-###Introducing pg_auto_failover: Open source extension for automated
+Introducing pg_auto_failover: Open source extension for automated
 
-###Кластер состоит из 3-м машин: pgm для монитора, pg1 как мастер и pg2 как реплика
+Кластер состоит из 3-м машин: pgm для монитора, pg1 как мастер и pg2 как реплика
 
 ###Устанавливаем pg_auto_failover и переменные окружения на каждой ноде
 ```
