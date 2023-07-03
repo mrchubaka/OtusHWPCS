@@ -1,0 +1,233 @@
+#Домашнее задание №8
+
+##Развернуть CockroachDB в GKE или GCE (я по старинке у себя :)
+
+
+###Подготовка хостов
+```
+sudo apt update
+sudo apt upgrade
+sudo apt install curl
+
+cd /home/alex/
+curl -O https://binaries.cockroachdb.com/cockroach-latest.linux-amd64.tgz
+tar -xvf cockroach-latest.linux-amd64.tgz
+cd cockroach-v23.1.3.linux-amd64/
+sudo cp -i cockroach /usr/local/bin/
+sudo mkdir /var/lib/cockroach
+sudo chown -R $USER:$USER /var/lib/cockroach
+
+
+alex@pg0:~/Desktop$ cd /home/alex/
+alex@pg0:~$ curl -O https://binaries.cockroachdb.com/cockroach-latest.linux-amd64.tgz
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  108M  100  108M    0     0  4707k      0  0:00:23  0:00:23 --:--:-- 4118k
+alex@pg0:~$ tar -xvf cockroach-latest.linux-amd64.tgz
+cockroach-v23.1.3.linux-amd64/cockroach
+cockroach-v23.1.3.linux-amd64/lib/libgeos.so
+cockroach-v23.1.3.linux-amd64/lib/libgeos_c.so
+alex@pg0:~$ cd cockroach-v23.1.3.linux-amd64/
+alex@pg0:~/cockroach-v23.1.3.linux-amd64$ sudo cp -i cockroach /usr/local/bin/
+[sudo] password for alex: 
+alex@pg0:~/cockroach-v23.1.3.linux-amd64$ sudo mkdir /var/lib/cockroach
+alex@pg0:~/cockroach-v23.1.3.linux-amd64$ sudo chown -R $USER:$USER /var/lib/cockroach
+alex@pg0:~/cockroach-v23.1.3.linux-amd64$ 
+```
+
+###Запуск на обоих нодах
+```
+alex@pg0:~/cockroach-v23.1.3.linux-amd64$ cockroach start --insecure --store=server1 --listen-addr=192.168.200.80:26257 --http-addr=192.168.200.80:8080 --join=192.168.200.80:26257,192.168.1.51:26258 --background
+*
+* WARNING: ALL SECURITY CONTROLS HAVE BEEN DISABLED!
+* 
+* This mode is intended for non-production testing only.
+* 
+* In this mode:
+* - Your cluster is open to any client that can access 192.168.200.80.
+* - Intruders with access to your machine or network can observe client-server traffic.
+* - Intruders can log in without password and read or write any data in the cluster.
+* - Intruders can consume all your server's resources and cause unavailability.
+*
+*
+* INFO: To start a secure server without mandating TLS for clients,
+* consider --accept-sql-without-tls instead. For other options, see:
+* 
+* - https://go.crdb.dev/issue-v/53404/v23.1
+* - https://www.cockroachlabs.com/docs/v23.1/secure-a-cluster.html
+*
+*
+* WARNING: Running a server without --sql-addr, with a combined RPC/SQL listener, is deprecated.
+* This feature will be removed in the next version of CockroachDB.
+*
+*
+* INFO: initial startup completed.
+* Node will now attempt to join a running cluster, or wait for `cockroach init`.
+* Client connections will be accepted after this completes successfully.
+* Check the log file(s) for progress. 
+*
+alex@pg0:~/cockroach-v23.1.3.linux-amd64$
+
+======================================================================================================
+======================================================================================================
+
+alex@pg1:~/cockroach-v23.1.3.linux-amd64$ cockroach start --insecure --store=pg1 --listen-addr=192.168.200.81:26257 --http-addr=192.168.200.81:8080 --join=192.168.200.80:26257,192.168.200.81:26258 --background
+*
+* WARNING: ALL SECURITY CONTROLS HAVE BEEN DISABLED!
+* 
+* This mode is intended for non-production testing only.
+* 
+* In this mode:
+* - Your cluster is open to any client that can access 192.168.200.81.
+* - Intruders with access to your machine or network can observe client-server traffic.
+* - Intruders can log in without password and read or write any data in the cluster.
+* - Intruders can consume all your server's resources and cause unavailability.
+*
+*
+* INFO: To start a secure server without mandating TLS for clients,
+* consider --accept-sql-without-tls instead. For other options, see:
+* 
+* - https://go.crdb.dev/issue-v/53404/v23.1
+* - https://www.cockroachlabs.com/docs/v23.1/secure-a-cluster.html
+*
+*
+* WARNING: Running a server without --sql-addr, with a combined RPC/SQL listener, is deprecated.
+* This feature will be removed in the next version of CockroachDB.
+*
+*
+* INFO: initial startup completed.
+* Node will now attempt to join a running cluster, or wait for `cockroach init`.
+* Client connections will be accepted after this completes successfully.
+* Check the log file(s) for progress. 
+*
+alex@pg1:~/cockroach-v23.1.3.linux-amd64$ 
+
+======================================================================================================
+======================================================================================================
+
+alex@pg0:~/cockroach-v23.1.3.linux-amd64$ cockroach init --insecure --host=192.168.200.80:26257
+Cluster successfully initialized
+
+```
+
+###Подключение к базе данных
+```
+alex@pg0:~/cockroach-v23.1.3.linux-amd64$ cockroach sql --insecure --host=pg0
+#
+# Welcome to the CockroachDB SQL shell.
+# All statements must be terminated by a semicolon.
+# To exit, type: \q.
+#
+# Server version: CockroachDB CCL v23.1.3 (x86_64-pc-linux-gnu, built 2023/06/08 22:36:13, go1.19.4) (same version as client)
+# Cluster ID: 06a14bb2-c689-4337-8548-42e9c008b5a8
+#
+# Enter \? for a brief introduction.
+#
+root@pg0:26257/defaultdb> \l                                                                                                                                    
+List of databases:
+    Name    | Owner | Encoding |  Collate   |   Ctype    | Access privileges
+------------+-------+----------+------------+------------+--------------------
+  alex      | root  | UTF8     | en_US.utf8 | en_US.utf8 |
+  defaultdb | root  | UTF8     | en_US.utf8 | en_US.utf8 |
+  postgres  | root  | UTF8     | en_US.utf8 | en_US.utf8 |
+  system    | node  | UTF8     | en_US.utf8 | en_US.utf8 |
+(4 rows)
+root@pg0:26257/defaultdb>
+root@pg0:26257/defaultdb> use alex;                                                                                                                                                    
+SET
+
+Time: 1ms total (execution 0ms / network 0ms)
+
+root@pg0:26257/alex>    
+```
+
+###Добавлеяем данные
+```
+root@pg0:26257/alex> CREATE TABLE external_table (                                                                                                                                     
+                  -> unique_key text,                                                                                                                                                  
+                  -> taxi_id text,                                                                                                                                                     
+                  -> trip_start_timestamp TIMESTAMP,                                                                                                                                   
+                  -> trip_end_timestamp TIMESTAMP,                                                                                                                                     
+                  -> trip_seconds bigint,                                                                                                                                              
+                  -> trip_miles numeric,                                                                                                                                               
+                  -> pickup_census_tract bigint,                                                                                                                                       
+                  -> dropoff_census_tract bigint,                                                                                                                                      
+                  -> pickup_community_area bigint,                                                                                                                                     
+                  -> dropoff_community_area bigint,                                                                                                                                    
+                  -> fare numeric,                                                                                                                                                     
+                  -> tips numeric,                                                                                                                                                     
+                  -> tolls numeric,                                                                                                                                                    
+                  -> extras numeric,                                                                                                                                                   
+                  -> trip_total numeric,                                                                                                                                               
+                  -> payment_type text,                                                                                                                                                
+                  -> company text,                                                                                                                                                     
+                  -> pickup_latitude numeric,                                                                                                                                          
+                  -> pickup_longitude numeric,                                                                                                                                         
+                  -> pickup_location text,                                                                                                                                             
+                  -> dropoff_latitude numeric,                                                                                                                                         
+                  -> dropoff_longitude numeric,                                                                                                                                        
+                  -> dropoff_location text                                                                                                                                             
+                  -> );                                                                                                                                                                
+CREATE TABLE
+
+Time: 19ms total (execution 18ms / network 0ms)
+
+root@pg0:26257/alex>
+root@pg0:26257/alex> IMPORT INTO external_table (                                                                                                                                      
+                  ->    unique_key,                                                                                                                                                    
+                  ->    taxi_id,                                                                                                                                                       
+                  ->    trip_start_timestamp,                                                                                                                                          
+                  ->    trip_end_timestamp,                                                                                                                                            
+                  ->    trip_seconds,                                                                                                                                                  
+                  ->    trip_miles,                                                                                                                                                    
+                  ->    pickup_census_tract,                                                                                                                                           
+                  ->    dropoff_census_tract,                                                                                                                                          
+                  ->    pickup_community_area,                                                                                                                                         
+                  ->    dropoff_community_area,                                                                                                                                        
+                  ->    fare,                                                                                                                                                          
+                  ->    tips,                                                                                                                                                          
+                  ->    tolls,                                                                                                                                                         
+                  ->    extras,                                                                                                                                                        
+                  ->    trip_total,                                                                                                                                                    
+                  ->    payment_type,                                                                                                                                                  
+                  ->    company,                                                                                                                                                       
+                  ->    pickup_latitude,                                                                                                                                               
+                  ->    pickup_longitude,                                                                                                                                              
+                  ->    pickup_location,                                                                                                                                               
+                  ->    dropoff_latitude,                                                                                                                                              
+                  ->    dropoff_longitude,                                                                                                                                             
+                  ->    dropoff_location)                                                                                                                                              
+                  -> CSV DATA ('nodelocal://1/taxi2.csv');                                                                                                                             
+                  ->                                                                                                                                                                  
+        job_id       |  status   | fraction_completed |   rows   | index_entries |  bytes
+---------------------+-----------+--------------------+----------+---------------+-----------
+  878942108157771777 | succeeded |                  1 | 26753683 |             0 |  10.0 GB
+(1 row)
+
+Time: 19701.601s total (execution 19.700s / network 0.000s)
+
+```     
+
+###Duration postgresql 14
+
+```
+root@pg0:26257/alex> SELECT count(*) from employees;                                                                                                                                   
+  count
+----------
+  26753683
+(1 row)
+
+Time: 8701.618ms total (execution 8701ms / network 0ms)
+
+root@pg0:26257/alex>  
+
+```
+
+###Duration postgresql 14
+
+```
+Запрос Count 100655.154 ms
+
+2023-06-08 13:02:51.708 MSK [2448] postgres@vehicles LOG:  duration: 100655.154 ms
+
+```
